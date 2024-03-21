@@ -1,89 +1,47 @@
-import random
 
-def is_prime(n, tests=10):
-    """Miller-Rabin primality test."""
-    if n == 2 or n == 3:
-        return True
-    if n % 2 == 0:
-        return False
-    
-    r, s = 0, n - 1
-    while s % 2 == 0:
-        r += 1
-        s //= 2
-    for _ in range(tests):
-        a = random.randrange(2, n - 1)
-        x = pow(a, s, n)
-        if x == 1 or x == n - 1:
-            continue
-        for _ in range(r - 1):
-            x = pow(x, 2, n)
-            if x == n - 1:
-                break
-        else:
-            return False
-    return True
-
-def generate_large_prime(key_size=1024):
-    """Generate a random large prime number."""
-    while True:
-        num = random.getrandbits(key_size)
-        if is_prime(num):
-            return num
-
-def gcd(a, b):
-    """Compute the greatest common divisor of a and b."""
-    while b != 0:
-        a, b = b, a % b
-    return a
-
+# Extended Euclidean Algorithm for finding modular inverse
 def extended_euclidean_algorithm(a, b):
-    """Extended Euclidean Algorithm for finding modular inverse."""
     if a == 0:
         return (b, 0, 1)
     else:
         g, y, x = extended_euclidean_algorithm(b % a, a)
         return (g, x - (b // a) * y, y)
 
+# Modular inverse using the extended Euclidean algorithm
 def modinv(a, m):
-    """Modular inverse using the extended Euclidean algorithm."""
     g, x, y = extended_euclidean_algorithm(a, m)
     if g != 1:
         raise Exception('Modular inverse does not exist')
     else:
         return x % m
 
-def generate_keypair(key_size=1024):
-    """Generate RSA key pair."""
-    p = generate_large_prime(key_size // 2)
-    q = generate_large_prime(key_size // 2)
-    n = p * q
-    phi = (p - 1) * (q - 1)
-
-    e = 65537
-    while gcd(e, phi) != 1:
-        e = random.randrange(2, phi)
-
-    d = modinv(e, phi)
-    return ((e, n), (d, n))
-
+# Encrypt a message with a public key
 def encrypt(pk, plaintext):
-    """Encrypt a message with a public key."""
     key, n = pk
     cipher = [pow(ord(char), key, n) for char in plaintext]
     return cipher
 
+# Decrypt a message with a private key
 def decrypt(pk, ciphertext):
-    """Decrypt a message with a private key."""
     key, n = pk
     plain = [chr(pow(char, key, n)) for char in ciphertext]
     return ''.join(plain)
 
 if __name__ == '__main__':
     print("Generating RSA key pair...")
-    public, private = generate_keypair(1024)
-    print("Public key:", public)
-    print("Private key:", private)
+    p = 0x1b764263030976734cbd55898b34b833a2a4a19de5cc563d72b13e99a39270d7bd276a541fd66fe397d721368690a3b09e44905e7076cbe5edf4ba529a37b189
+    q = 0xa0e5645b0abeb64f187f74d5f34748eefc15be845145c3757462207263b79a65643b13f5d049e58c75887eb28a96c537d4941a8ea3d5ae3ee4fc6f7f81835169
+
+    e = 65537
+
+    phi = (p-1) * (q - 1)
+
+    n = p * q
+
+    d = modinv(e, phi)
+
+    public = (e, n)
+    private = (d, n)
 
     message = 'This is a secret message.'
     print("Original:", message)
